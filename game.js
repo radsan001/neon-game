@@ -11,17 +11,17 @@ const Engine = Matter.Engine,
 
 // --- Game Constants & Config ---
 const GEM_TIERS = [
-  { radius: 15, color: '#ff00ff', score: 2 },     // Tier 0
-  { radius: 25, color: '#00ffff', score: 4 },     // Tier 1
-  { radius: 35, color: '#ff00aa', score: 8 },     // Tier 2
-  { radius: 45, color: '#00ccff', score: 16 },    // Tier 3
-  { radius: 60, color: '#cc00ff', score: 32 },    // Tier 4
-  { radius: 75, color: '#00ffcc', score: 64 },    // Tier 5
-  { radius: 95, color: '#ff9900', score: 128 },   // Tier 6
-  { radius: 115, color: '#ff3333', score: 256 },  // Tier 7
-  { radius: 135, color: '#33ff33', score: 512 },  // Tier 8
-  { radius: 155, color: '#ffff00', score: 1024 }, // Tier 9
-  { radius: 180, color: '#ffffff', score: 2048 }  // Tier 10
+  { radius: 15, color: '#ff00ff', score: 2 },
+  { radius: 25, color: '#00ffff', score: 4 },
+  { radius: 35, color: '#ff00aa', score: 8 },
+  { radius: 45, color: '#00ccff', score: 16 },
+  { radius: 60, color: '#cc00ff', score: 32 },
+  { radius: 75, color: '#00ffcc', score: 64 },
+  { radius: 95, color: '#ff9900', score: 128 },
+  { radius: 115, color: '#ff3333', score: 256 },
+  { radius: 135, color: '#33ff33', score: 512 },
+  { radius: 155, color: '#ffff00', score: 1024 },
+  { radius: 180, color: '#ffffff', score: 2048 }
 ];
 
 const GAME_WIDTH = 600;
@@ -36,6 +36,7 @@ let currentScore = 0;
 let stardust = 0;
 let isGameOver = false;
 let isGameRunning = false;
+let isPaused = false;
 let nextGemTier = 0;
 let walls = [];
 let topSensor;
@@ -49,19 +50,26 @@ let audioCtx;
 
 // --- DOM Elements ---
 const canvasWrapper = document.getElementById('canvas-wrapper');
-const scoreEl = document.getElementById('score');
-const stardustValEl = document.getElementById('stardust-val');
-const nextGemEl = document.getElementById('next-gem');
 const gameContainer = document.getElementById('game-container');
+
+// HUD
+const inGameHud = document.getElementById('in-game-hud');
+const scoreEl = document.getElementById('score');
+const nextGemEl = document.getElementById('next-gem');
+const btnPause = document.getElementById('btn-pause');
 
 // Menus
 const mainMenu = document.getElementById('main-menu');
+const pauseMenu = document.getElementById('pause-menu');
 const gameOverMenu = document.getElementById('game-over');
 const shopMenu = document.getElementById('shop');
 
 // Buttons
 const btnStart = document.getElementById('btn-start');
+const btnResume = document.getElementById('btn-resume');
+const btnBackFromPause = document.getElementById('btn-back-from-pause');
 const btnRestart = document.getElementById('btn-restart');
+const btnBackFromOver = document.getElementById('btn-back-from-over');
 const btnShare = document.getElementById('btn-share');
 const btnShop = document.getElementById('btn-shop');
 const btnCloseShop = document.getElementById('btn-close-shop');
@@ -121,26 +129,25 @@ function triggerHaptic(tier) {
 }
 
 function triggerHitStop(tier) {
-  if (tier < 3) return;
+  if (tier < 3 || isPaused || isGameOver) return;
   const stopTime = tier < 6 ? 50 : 100;
   
   Runner.stop(runner);
   
-  // Screen shake
   gameContainer.classList.add(tier < 6 ? 'shake' : 'shake-heavy');
   setTimeout(() => {
     gameContainer.classList.remove('shake', 'shake-heavy');
-    Runner.start(runner, engine);
+    if (!isPaused && !isGameOver) {
+      Runner.start(runner, engine);
+    }
   }, stopTime);
 }
 
 function updateEnvironment() {
-  // Shift background hue based on score
   const newHue = 280 + (currentScore * 0.05);
   const root = document.documentElement;
   root.style.setProperty('--bg-hue', newHue % 360);
   
-  // Increase particle speed
   const speed = Math.max(5, 20 - (currentScore * 0.001));
   root.style.setProperty('--particle-speed', `${speed}s`);
 }
@@ -150,7 +157,6 @@ function initMatter() {
   engine = Engine.create();
   world = engine.world;
   
-  // AAA physics feel
   engine.gravity.y = 1.5;
 
   render = Render.create({
@@ -170,7 +176,6 @@ function initMatter() {
   createWalls();
   setupEvents();
   
-  // Resize logic
   const resizeObserver = new ResizeObserver(() => {
     if (!render) return;
     render.canvas.width = canvasWrapper.clientWidth * window.devicePixelRatio;
@@ -184,15 +189,13 @@ function initMatter() {
   });
   resizeObserver.observe(canvasWrapper);
   
-  // Input handling
   canvasWrapper.addEventListener('pointerdown', (e) => {
-    if (isGameOver || !isGameRunning) return;
+    if (isGameOver || !isGameRunning || isPaused) return;
     initAudio();
     
     const rect = canvasWrapper.getBoundingClientRect();
     let x = e.clientX - rect.left;
     
-    // clamp x so gem doesn't spawn inside wall
     const radius = GEM_TIERS[nextGemTier].radius;
     const cw = canvasWrapper.clientWidth;
     if (x < radius + 10) x = radius + 10;
@@ -201,8 +204,7 @@ function initMatter() {
     spawnGem(x, 50, nextGemTier);
     playSound('drop');
     
-    // determine next gem
-    nextGemTier = Math.floor(Math.random() * 4); // Max initial tier is 3
+    nextGemTier = Math.floor(Math.random() * 4);
     updateNextGemUI();
   });
 }
@@ -212,12 +214,11 @@ function createWalls() {
   const ch = canvasWrapper.clientHeight || GAME_HEIGHT;
   
   walls = [
-    Bodies.rectangle(cw/2, ch + WALL_THICKNESS/2, cw, WALL_THICKNESS, { isStatic: true, render: { fillStyle: 'transparent' } }), // Bottom
-    Bodies.rectangle(-WALL_THICKNESS/2, ch/2, WALL_THICKNESS, ch * 2, { isStatic: true, render: { fillStyle: 'transparent' } }), // Left
-    Bodies.rectangle(cw + WALL_THICKNESS/2, ch/2, WALL_THICKNESS, ch * 2, { isStatic: true, render: { fillStyle: 'transparent' } }) // Right
+    Bodies.rectangle(cw/2, ch + WALL_THICKNESS/2, cw, WALL_THICKNESS, { isStatic: true, render: { fillStyle: 'transparent' } }),
+    Bodies.rectangle(-WALL_THICKNESS/2, ch/2, WALL_THICKNESS, ch * 2, { isStatic: true, render: { fillStyle: 'transparent' } }),
+    Bodies.rectangle(cw + WALL_THICKNESS/2, ch/2, WALL_THICKNESS, ch * 2, { isStatic: true, render: { fillStyle: 'transparent' } })
   ];
   
-  // Top limit sensor for Game Over
   topSensor = Bodies.rectangle(cw/2, TOP_LIMIT_Y, cw, 10, { 
     isStatic: true, 
     isSensor: true,
@@ -246,8 +247,8 @@ function updateWalls() {
 function spawnGem(x, y, tier) {
   const t = GEM_TIERS[tier];
   const gem = Bodies.circle(x, y, t.radius, {
-    restitution: 0.2, // bouncy but weighty
-    density: 0.001 * (tier + 1), // heavier as they grow
+    restitution: 0.2,
+    density: 0.001 * (tier + 1),
     friction: 0.5,
     render: {
       fillStyle: t.color,
@@ -261,17 +262,16 @@ function spawnGem(x, y, tier) {
 
 function setupEvents() {
   Events.on(engine, 'collisionStart', (event) => {
+    if (isPaused) return; // Prevent logic if accidentally triggered
     const pairs = event.pairs;
     
     for (let i = 0; i < pairs.length; i++) {
       const bodyA = pairs[i].bodyA;
       const bodyB = pairs[i].bodyB;
       
-      // Check Game Over
       if (!isGameOver) {
         if ((bodyA === topSensor && bodyB.label.startsWith('gem_')) ||
             (bodyB === topSensor && bodyA.label.startsWith('gem_'))) {
-          // ensure the gem is actually settled
           const gem = bodyA === topSensor ? bodyB : bodyA;
           if (Math.abs(gem.velocity.y) < 0.1 && gem.position.y < TOP_LIMIT_Y + 20) {
             triggerGameOver();
@@ -279,13 +279,11 @@ function setupEvents() {
         }
       }
 
-      // Check Merge
       if (bodyA.label.startsWith('gem_') && bodyB.label.startsWith('gem_')) {
         const tierA = parseInt(bodyA.label.split('_')[1]);
         const tierB = parseInt(bodyB.label.split('_')[1]);
         
         if (tierA === tierB && tierA < GEM_TIERS.length - 1) {
-          // Merge happens
           const nextTier = tierA + 1;
           const newX = (bodyA.position.x + bodyB.position.x) / 2;
           const newY = (bodyA.position.y + bodyB.position.y) / 2;
@@ -293,18 +291,15 @@ function setupEvents() {
           Composite.remove(world, [bodyA, bodyB]);
           spawnGem(newX, newY, nextTier);
           
-          // Add Score
           currentScore += GEM_TIERS[nextTier].score;
           stardust += Math.floor(GEM_TIERS[nextTier].score / 2);
           updateUI();
           
-          // Juice
           playSound(nextTier > 5 ? 'merge_big' : 'merge_small');
           triggerHaptic(nextTier);
           triggerHitStop(nextTier);
           updateEnvironment();
           
-          // Prevent double processing for this frame
           bodyA.label = 'merged';
           bodyB.label = 'merged';
         }
@@ -315,14 +310,12 @@ function setupEvents() {
 
 function updateUI() {
   scoreEl.textContent = currentScore;
-  stardustValEl.textContent = stardust;
 }
 
 function updateNextGemUI() {
   const t = GEM_TIERS[nextGemTier];
   nextGemEl.style.backgroundColor = t.color;
-  // Visual sizing in the preview box
-  const size = Math.min(60, t.radius * 2);
+  const size = Math.min(45, t.radius * 2);
   nextGemEl.style.width = size + 'px';
   nextGemEl.style.height = size + 'px';
 }
@@ -331,9 +324,14 @@ function startGame() {
   initAudio();
   mainMenu.classList.remove('active');
   mainMenu.classList.add('hidden');
+  gameOverMenu.classList.remove('active');
   gameOverMenu.classList.add('hidden');
+  pauseMenu.classList.remove('active');
+  pauseMenu.classList.add('hidden');
   
-  // Clear world
+  inGameHud.classList.remove('hidden');
+  canvasWrapper.classList.remove('blurred');
+  
   Composite.clear(world);
   Engine.clear(engine);
   createWalls();
@@ -341,6 +339,7 @@ function startGame() {
   currentScore = 0;
   isGameOver = false;
   isGameRunning = true;
+  isPaused = false;
   nextGemTier = Math.floor(Math.random() * 4);
   
   updateUI();
@@ -350,14 +349,62 @@ function startGame() {
   Runner.run(runner, engine);
 }
 
+function pauseGame() {
+  if (!isGameRunning || isGameOver || isPaused) return;
+  isPaused = true;
+  Runner.stop(runner);
+  canvasWrapper.classList.add('blurred');
+  inGameHud.classList.add('hidden');
+  
+  pauseMenu.classList.remove('hidden');
+  pauseMenu.classList.add('active');
+}
+
+function resumeGame() {
+  if (!isGameRunning || isGameOver || !isPaused) return;
+  isPaused = false;
+  
+  pauseMenu.classList.remove('active');
+  pauseMenu.classList.add('hidden');
+  
+  inGameHud.classList.remove('hidden');
+  canvasWrapper.classList.remove('blurred');
+  
+  Runner.start(runner, engine);
+}
+
+function backToMenu() {
+  isGameRunning = false;
+  isPaused = false;
+  isGameOver = false;
+  
+  Runner.stop(runner);
+  Render.stop(render);
+  
+  pauseMenu.classList.remove('active');
+  pauseMenu.classList.add('hidden');
+  gameOverMenu.classList.remove('active');
+  gameOverMenu.classList.add('hidden');
+  inGameHud.classList.add('hidden');
+  canvasWrapper.classList.remove('blurred');
+  
+  mainMenu.classList.remove('hidden');
+  mainMenu.classList.add('active');
+  
+  saveData();
+}
+
 function triggerGameOver() {
   if (isGameOver) return;
   isGameOver = true;
   isGameRunning = false;
+  isPaused = false;
   
-  // stop runner
   Runner.stop(runner);
   Render.stop(render);
+  
+  inGameHud.classList.add('hidden');
+  canvasWrapper.classList.add('blurred');
   
   finalScoreEl.textContent = `Score: ${currentScore}`;
   gameOverMenu.classList.remove('hidden');
@@ -383,11 +430,9 @@ function loadData() {
     stardust = data.stardust || 0;
     unlockedThemes = data.unlockedThemes || ['default'];
     activeTheme = data.activeTheme || 'default';
-    updateUI();
   }
 }
 
-// Auto-save every 3 seconds
 setInterval(() => {
   if (isGameRunning) {
     saveData();
@@ -413,7 +458,11 @@ btnShare.addEventListener('click', async () => {
 
 // --- UI Event Listeners ---
 btnStart.addEventListener('click', startGame);
+btnPause.addEventListener('click', pauseGame);
+btnResume.addEventListener('click', resumeGame);
+btnBackFromPause.addEventListener('click', backToMenu);
 btnRestart.addEventListener('click', startGame);
+btnBackFromOver.addEventListener('click', backToMenu);
 
 btnShop.addEventListener('click', () => {
   shopStardustEl.textContent = `Your Stardust: ${stardust} ✨`;

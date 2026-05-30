@@ -14,15 +14,20 @@
 <body>
   <div id="game-container">
     <div id="background-fx"></div>
-    <div id="ui-layer">
-      <div id="score-container">
-        <div id="score">0</div>
-        <div id="stardust">Stardust: <span id="stardust-val">0</span> ✨</div>
+    
+    <!-- Persistent In-Game HUD (Top Bar) -->
+    <div id="in-game-hud" class="hidden">
+      <div class="hud-score-area">
+        <span class="hud-label">SCORE</span>
+        <span id="score" class="hud-value">0</span>
       </div>
       <div id="next-gem-container">
         <div id="next-gem"></div>
       </div>
+      <button id="btn-pause" class="btn-hud">⏸ STOP/PAUSE</button>
     </div>
+
+    <!-- The actual game canvas wrapper -->
     <div id="canvas-wrapper">
       <!-- Matter.js canvas will be appended here -->
     </div>
@@ -32,7 +37,22 @@
       <h1>NEON<br>COSMIC GEM</h1>
       <button id="btn-start" class="btn primary-btn">START GAME</button>
       <button id="btn-shop" class="btn secondary-btn">SHOP</button>
-      <div class="developer-credit">Developed by Sandeep Rao</div>
+      
+      <!-- Guaranteed Affiliate Links Block -->
+      <div class="affiliate-container" style="display:flex; flex-direction:column; gap:10px; margin-top:20px; z-index:9999; position:relative;">
+        <h3 style="color:#fff; font-size:14px; text-align:center;">Recommended Gaming Gear</h3>
+        <a href="https://www.amazon.com/s?k=mobile+gaming+controller&tag=sandeep02-20" target="_blank" rel="noopener noreferrer" style="background:#ff9900; color:#000; padding:12px; border-radius:8px; text-decoration:none; text-align:center; font-weight:bold; box-shadow: 0 0 10px #ff9900;">🎮 Best Mobile Controllers</a>
+        <a href="https://www.amazon.com/s?k=amazon+fire+tablet+gaming&tag=sandeep02-20" target="_blank" rel="noopener noreferrer" style="background:#ff9900; color:#000; padding:12px; border-radius:8px; text-decoration:none; text-align:center; font-weight:bold; box-shadow: 0 0 10px #ff9900;">📱 Upgrade to Fire Tablet</a>
+      </div>
+
+      <p style="color:#aaa; font-size:12px; text-align:center; padding-top:20px;">Developed by Sandeep Rao</p>
+    </div>
+
+    <!-- Pause Menu Overlay -->
+    <div id="pause-menu" class="overlay hidden">
+      <h2>PAUSED</h2>
+      <button id="btn-resume" class="btn primary-btn">▶ RESUME</button>
+      <button id="btn-back-from-pause" class="btn secondary-btn">🔙 BACK TO MENU</button>
     </div>
 
     <!-- Game Over Overlay -->
@@ -41,23 +61,17 @@
       <div id="final-score">Score: 0</div>
       
       <div class="action-buttons">
-        <button id="btn-restart" class="btn primary-btn">PLAY AGAIN</button>
+        <button id="btn-restart" class="btn primary-btn">🔄 RESTART</button>
+        <button id="btn-back-from-over" class="btn secondary-btn">🔙 BACK TO MENU</button>
         <button id="btn-share" class="btn share-btn">SHARE SCORE</button>
       </div>
 
-      <div class="sponsored-section">
-        <h3>Recommended Gaming Gear</h3>
-        <a href="https://www.amazon.com/s?k=mobile+gaming+controller&tag=sandeep02-20" target="_blank" rel="noopener noreferrer" class="affiliate-link">
-          🎮 Best Mobile Controllers
-        </a>
-        <a href="https://www.amazon.com/s?k=amazon+fire+tablet+gaming&tag=sandeep02-20" target="_blank" rel="noopener noreferrer" class="affiliate-link">
-          📱 Upgrade to Fire Tablet
-        </a>
-        <a href="https://www.amazon.com/s?k=gaming+earbuds&tag=sandeep02-20" target="_blank" rel="noopener noreferrer" class="affiliate-link">
-          🎧 Pro Gaming Earbuds
-        </a>
+      <!-- Guaranteed Affiliate Links Block -->
+      <div class="affiliate-container" style="display:flex; flex-direction:column; gap:10px; margin-top:20px; z-index:9999; position:relative;">
+        <h3 style="color:#fff; font-size:14px; text-align:center;">Recommended Gaming Gear</h3>
+        <a href="https://www.amazon.com/s?k=mobile+gaming+controller&tag=sandeep02-20" target="_blank" rel="noopener noreferrer" style="background:#ff9900; color:#000; padding:12px; border-radius:8px; text-decoration:none; text-align:center; font-weight:bold; box-shadow: 0 0 10px #ff9900;">🎮 Best Mobile Controllers</a>
+        <a href="https://www.amazon.com/s?k=amazon+fire+tablet+gaming&tag=sandeep02-20" target="_blank" rel="noopener noreferrer" style="background:#ff9900; color:#000; padding:12px; border-radius:8px; text-decoration:none; text-align:center; font-weight:bold; box-shadow: 0 0 10px #ff9900;">📱 Upgrade to Fire Tablet</a>
       </div>
-      <div class="developer-credit">Developed by Sandeep Rao</div>
     </div>
 
     <!-- Shop Overlay -->

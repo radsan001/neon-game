@@ -80,6 +80,11 @@ body {
   width: 100%;
   height: 100%;
   z-index: 1;
+  transition: filter 0.3s ease;
+}
+
+#canvas-wrapper.blurred {
+  filter: blur(10px);
 }
 
 #canvas-wrapper canvas {
@@ -88,45 +93,66 @@ body {
   height: 100%;
 }
 
-/* UI Layer */
-#ui-layer {
+/* Persistent In-Game HUD */
+#in-game-hud {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
-  z-index: 2;
-  pointer-events: none;
+  padding: 15px 20px;
   display: flex;
   justify-content: space-between;
-  padding: 20px;
+  align-items: center;
+  z-index: 100;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+  pointer-events: none; /* Let clicks pass through empty areas */
 }
 
-#score-container {
+#in-game-hud.hidden {
+  display: none !important;
+}
+
+.hud-score-area {
   display: flex;
   flex-direction: column;
 }
 
-#score {
-  font-size: 3rem;
+.hud-label {
+  font-size: 0.8rem;
+  color: var(--secondary);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.hud-value {
+  font-size: 2rem;
   font-weight: 900;
-  text-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary);
+  text-shadow: 0 0 10px var(--primary);
   line-height: 1;
 }
 
-#stardust {
-  font-size: 1.2rem;
-  color: var(--secondary);
-  text-shadow: 0 0 5px var(--secondary);
-  margin-top: 5px;
+.btn-hud {
+  pointer-events: auto; /* Re-enable clicks for the button */
+  touch-action: manipulation;
+  background: var(--glass-bg);
+  color: var(--text-color);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 10px 15px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: var(--glass-shadow);
+  min-height: 48px; /* Mobile touch target */
 }
 
 #next-gem-container {
-  width: 80px;
-  height: 80px;
+  width: 60px;
+  height: 60px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  border-radius: 15px;
+  border-radius: 12px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   display: flex;
@@ -136,10 +162,9 @@ body {
 }
 
 #next-gem {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  /* dynamically styled by JS */
 }
 
 /* Overlays */
@@ -152,7 +177,7 @@ body {
   background: var(--glass-bg);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
-  z-index: 10;
+  z-index: 200;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -177,7 +202,7 @@ h1 {
   font-size: 4rem;
   font-weight: 900;
   line-height: 1.1;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
   text-transform: uppercase;
   background: linear-gradient(to bottom, #ffffff, var(--secondary));
   -webkit-background-clip: text;
@@ -204,6 +229,8 @@ h2 {
   margin: 10px 0;
   width: 80%;
   max-width: 300px;
+  min-height: 48px; /* Mobile touch target */
+  touch-action: manipulation;
   text-transform: uppercase;
   transition: all 0.2s ease;
   position: relative;
@@ -242,7 +269,7 @@ h2 {
 #final-score {
   font-size: 2.5rem;
   font-weight: 700;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .action-buttons {
@@ -250,45 +277,7 @@ h2 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 30px;
-}
-
-/* Sponsored Section */
-.sponsored-section {
-  width: 100%;
-  max-width: 400px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 15px;
-  padding: 15px;
-  margin-top: 20px;
-}
-
-.sponsored-section h3 {
-  font-size: 1rem;
-  color: #aaaaaa;
   margin-bottom: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.affiliate-link {
-  display: block;
-  padding: 12px;
-  margin: 8px 0;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: #ffffff;
-  text-decoration: none;
-  font-weight: 700;
-  transition: background 0.2s;
-}
-
-.affiliate-link:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: var(--secondary);
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
 }
 
 /* Shop */
@@ -325,15 +314,6 @@ h2 {
   text-shadow: 0 0 10px var(--secondary);
 }
 
-.developer-credit {
-  position: absolute;
-  bottom: 20px;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.5);
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
 /* Screen Shake Animation */
 @keyframes shake {
   0% { transform: translate(1px, 1px) rotate(0deg); }
@@ -355,5 +335,4 @@ h2 {
 
 .shake-heavy {
   animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
-  /* Amplifying transform via css custom property or just a longer animation */
 }
