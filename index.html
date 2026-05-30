@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0d001a">
+  <title>Neon Cosmic Gem</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+</head>
+<body>
+  <div id="game-container">
+    <div id="background-fx"></div>
+    <div id="ui-layer">
+      <div id="score-container">
+        <div id="score">0</div>
+        <div id="stardust">Stardust: <span id="stardust-val">0</span> ✨</div>
+      </div>
+      <div id="next-gem-container">
+        <div id="next-gem"></div>
+      </div>
+    </div>
+    <div id="canvas-wrapper">
+      <!-- Matter.js canvas will be appended here -->
+    </div>
+
+    <!-- Main Menu Overlay -->
+    <div id="main-menu" class="overlay active">
+      <h1>NEON<br>COSMIC GEM</h1>
+      <button id="btn-start" class="btn primary-btn">START GAME</button>
+      <button id="btn-shop" class="btn secondary-btn">SHOP</button>
+      <div class="developer-credit">Developed by Sandeep Rao</div>
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div id="game-over" class="overlay hidden">
+      <h2>GAME OVER</h2>
+      <div id="final-score">Score: 0</div>
+      
+      <div class="action-buttons">
+        <button id="btn-restart" class="btn primary-btn">PLAY AGAIN</button>
+        <button id="btn-share" class="btn share-btn">SHARE SCORE</button>
+      </div>
+
+      <div class="sponsored-section">
+        <h3>Recommended Gaming Gear</h3>
+        <a href="https://www.amazon.com/s?k=mobile+gaming+controller&tag=sandeep02-20" target="_blank" rel="noopener noreferrer" class="affiliate-link">
+          🎮 Best Mobile Controllers
+        </a>
+        <a href="https://www.amazon.com/s?k=amazon+fire+tablet+gaming&tag=sandeep02-20" target="_blank" rel="noopener noreferrer" class="affiliate-link">
+          📱 Upgrade to Fire Tablet
+        </a>
+        <a href="https://www.amazon.com/s?k=gaming+earbuds&tag=sandeep02-20" target="_blank" rel="noopener noreferrer" class="affiliate-link">
+          🎧 Pro Gaming Earbuds
+        </a>
+      </div>
+      <div class="developer-credit">Developed by Sandeep Rao</div>
+    </div>
+
+    <!-- Shop Overlay -->
+    <div id="shop" class="overlay hidden">
+      <h2>SHOP</h2>
+      <div id="shop-stardust">Your Stardust: 0 ✨</div>
+      <div class="shop-items">
+        <div class="shop-item">
+          <div class="item-name">Default Neon</div>
+          <div class="item-cost">Equipped</div>
+          <button class="btn primary-btn" disabled>Active</button>
+        </div>
+        <div class="shop-item">
+          <div class="item-name">Cyberpunk City</div>
+          <div class="item-cost">500 ✨</div>
+          <button class="btn secondary-btn">Buy</button>
+        </div>
+      </div>
+      <button id="btn-close-shop" class="btn secondary-btn">CLOSE</button>
+    </div>
+  </div>
+  
+  <script src="game.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').then(reg => {
+          console.log('ServiceWorker registered:', reg);
+        }).catch(err => console.error('ServiceWorker error:', err));
+      });
+    }
+  </script>
+</body>
+</html>

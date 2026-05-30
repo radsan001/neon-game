@@ -1,0 +1,17 @@
+{
+  "name": "Neon Cosmic Gem",
+  "short_name": "Cosmic Gem",
+  "description": "AAA Enterprise-Grade Physics-Based Merge Puzzle Game",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0d001a",
+  "theme_color": "#0d001a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
